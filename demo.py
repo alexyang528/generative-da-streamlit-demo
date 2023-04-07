@@ -154,7 +154,12 @@ with c2:
 
     prompt = construct_prompt(query, results, document_fields, instructions, num_results)
     answer = call_chat_gpt(prompt)
-    answer_json = json.loads(answer["content"])
+    try:
+        answer_json = json.loads(answer["content"])
+    except:
+        st.write(answer)
+        st.warning("Error parsing response from GPT, raw response shown.")
+        st.stop()
     st.info(answer_json["response"])
 
     st.markdown("## Source:")
