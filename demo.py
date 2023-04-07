@@ -61,13 +61,6 @@ def yext_search(query, vertical, locale, _client):
     return results, raw_results
 
 
-def filter_fields(results, fields):
-    out = []
-    for result in results:
-        out.append({k: v for k, v in result.items() if k in fields})
-    return out
-
-
 # Configure Search Parameters
 st.sidebar.markdown("## Search Parameters:")
 query = st.sidebar.text_input(label="Query")
@@ -90,13 +83,14 @@ def construct_prompt(query, results, fields, instructions, num_results):
         if len(results) < num_results:
             num_results = len(results)
 
-        results = filter_fields(results, fields)
+        filtered_results = []
+        for result in results:
+            filtered_results.append({k: v for k, v in result.items() if k in fields})
 
         results_prompt = ""
-
         for i in range(num_results):
             results_prompt += "## RESULT:\n"
-            for key, value in results[i].items():
+            for key, value in filtered_results[i].items():
                 results_prompt += f"- {key}: {value}\n"
         return results_prompt
 
@@ -105,10 +99,11 @@ def construct_prompt(query, results, fields, instructions, num_results):
     return prompt
 
 def render_result(result, display_fields):
-    out = f"### {result[display_fields[0]]}\n"
+    out = f"### {result.get(display_fields[0], '')}\n"
 
     for field in display_fields[1:]:
-        display_value = result[field][:500] + "..." if len(result[field]) > 500 else result[field]
+        value = result.get(field, '')
+        display_value = value[:500] + "..." if len(value) > 500 else value
         out += f"**{field}**: {display_value}\n\n"
     
     return out
@@ -127,10 +122,11 @@ if len(results) == 0:
 
 c1, _, c2 = st.columns((1, 0.05, 1))
 with c1:
+    default_document_fields = st.secrets[account]["default_document_fields"] if "default_document_fields" in st.secrets[account] else []
     display_fields = st.multiselect(
         label="Display Fields",
         options=results[0].keys(),
-        default=["name", "id"] + st.secrets[account]["default_document_fields"],
+        default=["name", "id"] + default_document_fields,
     )
     if not display_fields:
         st.warning("Select at least one display field to continue.")
