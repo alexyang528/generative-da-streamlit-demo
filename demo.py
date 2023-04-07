@@ -156,21 +156,19 @@ with c2:
     answer = call_chat_gpt(prompt)
     try:
         answer_json = json.loads(answer["content"])
-    except:
-        st.write(answer)
-        st.warning("Error parsing response from GPT, raw response shown.")
-        st.stop()
-    st.info(answer_json["response"])
+        st.info(answer_json["response"])
 
-    st.markdown("## Source:")
-    if answer_json["source"]:
+        st.markdown("## Source:")
         for source in answer_json["source"]:
             for result in results:
                 if result["id"] == source["id"]:
                     st.info(render_result(result, display_fields))
                     break
-    else:
-        st.info("No source provided.")
+    except:
+        st.warning("Error parsing response from GPT. See raw response below.")
 
     with st.expander("Prompt"):
         st.code(prompt)
+    
+    with st.expander("Raw Response"):
+        st.json(answer)
